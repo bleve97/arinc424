@@ -17,7 +17,7 @@ class Field():
 # Chapter 5 - Field Definitions
 
 def def_val():
-    return "bad value"
+    return "<UNKNOWN>"
 
 
 # 5.2 Record Type
@@ -27,21 +27,34 @@ def field_002(value, record):
     elif value == 'T':
         return 'Tailored'
     else:
-        return 'Error: invalid record type'
+        raise ValueError("Invalid Record Type", value)
 
 
 # 5.3 Customer / Area Code
 def field_003(value, record):
     match value:
         case 'USA':
-            return 'USA - United States of America'
+            return 'United States of America'
         case 'AFR':
-            return 'AFR - Africa'
-        case 'XYZ':
-            # TODO: wat
-            return 'XYZ - No Idea'
+            return 'Africa'
+        case 'CAN':
+            return 'Canada'
+        case 'EEU':
+            return 'Eastern Europe and Asia'
+        case 'EUR':
+            return 'Europe'
+        case 'LAM':
+            return 'Latin America'
+        case 'MES':
+            return 'Middle East'
+        case 'PAC':
+            return 'Pacific'
+        case 'SAM':
+            return 'Southern America'
+        case 'SPA':
+            return 'South Pacific'
         case _:
-            print("UNKNOWN:", value)
+            return '<UNKNOWN>'
 
 
 # 5.4 & 5.5 Section Code & Subsection Code
@@ -175,20 +188,23 @@ def field_007(value, record):
 
 # 5.8 Route Identifier (ROUTE IDENT)
 def field_008(value, record):
-    return value
+    if value.strip().isalnum():
+        return value
+    else:
+        raise ValueError("Route Identifier not alphanumeric", value)
 
 
 # 5.9 SID/STAR Route Identifier (SID/STAR IDENT)
 def field_009(value, record):
     if value.strip().isalnum():
         return value
-    else:
-        return "UNKNOWN: " + value
+    # else:
+    #     raise ValueError("SID/STAR Route Identifier not alphanumeric", value)
 
 
 # 5.10 Approach Route Identifier (APPROACH IDENT)
 def field_010(value, record):
-    return value
+    return f"Approach: {value[0]}, Runway: {value[1:4]}"
 
 
 # 5.11 Transition Identifier (TRANS IDENT)
@@ -198,7 +214,18 @@ def field_011(value, record):
 
 # 5.12 Sequence Number (SEQ NR)
 def field_012(value, record):
-    return value
+    match len(value.strip()):
+        case 1:
+            return f'MSA Table, TAA Table, Cruise Table - Sequence No. {value}'
+        case 2:
+            return f'VHF Navaid Limitation Continuation Records - Sequence No. {value}'
+        case 3:
+            return f'SID/STAR/Approach and Company Routes - Sequence No. {value}'
+        case 4:
+            return f'Enroute Airways, Preferred Routes, FIR/UIR, and Restrictive Airspace - Sequence No. {value}'
+        case _:
+            import sys
+            sys.exit()
 
 
 # 5.13 Fix Identifier (FIX IDENT)
@@ -224,7 +251,33 @@ def field_016(value, record):
 
 # 5.17 Waypoint Description Code (DESC CODE)
 def field_017(value, record):
-    return value
+    s = ''
+    match value[0]:
+        case 'A':
+            s += ('Airport as Fix')
+        case 'E':
+            s += ('Essential Waypoint')
+        case 'F':
+            s += ('Off Airway Floating Waypoint')
+        case 'G':
+            s += ('Runway/Helipad as Fix')
+        case 'H':
+            s += ('Heliport as Waypoint')
+        case 'N':
+            s += ('NDB Navaid as Waypoint')
+        case 'P':
+            s += ('Phantom Waypoint')
+        case 'R':
+            s += ('Non-Essential Waypoint')
+        case 'T':
+            s += ('Transition Essential Waypoint')
+        case 'V':
+            s += ('VHF Navaid As Fix')
+        case _:
+            pass
+    # TODO: finish this
+
+    return s
 
 
 # 5.18 Boundary Code (BDY CODE)
@@ -247,36 +300,62 @@ def field_020(value, record):
     elif value == 'E' or value == ' ':
         return 'Either'
     else:
-        raise ValueError("Invalid Turn Direction" + value)
+        raise ValueError("Invalid Turn Direction:", value)
 
 
 # 5.21 Path and Termination (PATH TERM)
 def field_021(value, record):
+    value = value.strip()
+    if len(value) > 0:
+        if value.isalpha() is False:
+            raise ValueError("Invalid Path and Termination:", value)
     return value
 
 
 # 5.22 Turn Direction Valid (TDV)
 def field_022(value, record):
+    value = value.strip()
+    if len(value) > 0:
+        if value.isalpha() is False:
+            raise ValueError("Invalid Turn Direction Valid (TDV):", value)
     return value
 
 
 # 5.23 Recommended NAVAID (RECD NAV)
 def field_023(value, record):
+    value = value.strip()
+    if len(value) > 0:
+        if value.isalnum() is False or len(value) > 4:
+            raise ValueError("Invalid Recommended NAVAID (RECD NAV):", value)
     return value
 
 
 # 5.24 Theta (THETA)
 def field_024(value, record):
+    value = value.strip()
+    if len(value) > 0:
+        if value.isalnum() is False or len(value) > 4:
+            raise ValueError("Invalid Theta:", value)
     return value
 
 
 # 5.25 Rho (RHO)
 def field_025(value, record):
+    value = value.strip()
+    if len(value) > 0:
+        if value.isalnum() is False or len(value) > 4:
+            raise ValueError("Invalid Rho:", value)
     return value
 
 
 # 5.26 Outbound Magnetic Course (OB MAG CRS)
 def field_026(value, record):
+    value = value.strip()
+    if len(value) > 0:
+        if value.isalnum() is False or len(value) > 4:
+            raise ValueError('Invalid Outbound Magnetic Course', value)
+        else:
+            return "{:.1f}".format(float(value)/10)
     return value
 
 
@@ -307,7 +386,8 @@ def field_031(value, record):
 
 # 5.32 Cycle Date (CYCLE)
 def field_032(value, record):
-    return '{}, {}'.format("19" + value[:2] if int(value[:2]) > 50 else "20" + value[:2], value[2:])
+    year = "19" + value[:2] if int(value[:2]) > 50 else "20" + value[:2]
+    return '{}, Release {}'.format(year, value[2:])
 
 
 # 5.33 VOR/NDB Identifier (VOR IDENT/NDB IDENT)
@@ -317,10 +397,13 @@ def field_033(value, record):
 
 # 5.34 VOR/NDB Frequency (VOR/NDB FREQ)
 def field_034(value, record):
-    if (value.isnumeric()):
-        return "{:.2f}".format(float(value)/100)
-    else:
-        return "BAD VALUE"
+    value = value.strip()
+    if len(value) > 0:
+        if value.isnumeric() is False:
+            raise ValueError('Invalid VOR/NDB Frequency', value)
+        else:
+            return "{:.2f}".format(float(value)/100)
+    return value
 
 
 # 5.35 NAVAID Class (CLASS)
@@ -446,7 +529,7 @@ def field_042(value, record):
 
 # 5.43 Waypoint Name/Description (NAME/DESC)
 def field_043(value, record):
-    return value
+    return value.strip()
 
 
 # 5.44 Localizer/MLS/GLS Identifier (LOC, MLS, GLS IDENT)
@@ -655,18 +738,20 @@ def field_081(value, record):
 
 # 5.82 Waypoint Usage
 def field_082(value, record):
-    if value == ' B':
-        return 'HI and LO Altitude'
-    elif value == ' H':
-        return 'HI Altitude'
-    elif value == ' L':
-        return 'LO Altitude'
-    elif value == '  ':
-        return 'Terminal Use Only'
-    elif value == 'R ':
-        return 'RNAV'
+    wp = ''
+    if value[1] == 'B':
+        wp = wp + 'HI and LO Altitude'
+    elif value[1] == 'H':
+        wp = wp + 'HI Altitude'
+    elif value[1] == 'L':
+        wp = wp + 'LO Altitude'
+    elif value[1] == ' ':
+        wp = wp + 'Terminal Use Only'
+    elif value[0] == 'R':
+        wp = wp + 'RNAV'
     else:
-        raise ValueError("Invalid Waypoint Usage")
+        raise ValueError(f"Invalid Waypoint Usage: '{value}'")
+    return wp
 
 
 # 5.83 To FIX
@@ -832,7 +917,7 @@ def field_101(value, record):
     d['UAC'] = 'Upper Area Control'
     d['UNI'] = 'Unicom'
     d['VOL'] = 'Volmet'
-    return d[value] if d[value] != "bad value" else value + " - BAD VALUE"
+    return d[value] if d[value] != "bad value" else value + "BAD VALUE"
 
 
 # 5.102 Radar (RADAR)
@@ -843,7 +928,7 @@ def field_102(value, record):
         case 'N':
             return 'No Radar Capabilities'
         case _:
-            return 'bad radar value' + value
+            return value
 
 
 # 5.103 ‘Communications Frequency (COMM FREQ)
@@ -861,7 +946,7 @@ def field_104(value, record):
     d['V'] = 'Very High Frequency (30,000 kHz - 200 MHz)'
     d['U'] = 'Ultra High Frequency (200 MHz - 3000 MHz)'
     d['C'] = 'Communication Channel for 8.33 kHz spacing'
-    return d[value] if d[value] != "bad value" else value + " - BAD VALUE"
+    return d[value] if d[value] != "bad value" else value + "BAD VALUE"
 
 
 # 5.105 Call Sign (CALL SIGN)
@@ -1346,7 +1431,7 @@ def field_181(value, record):
     d = defaultdict(def_val)
     d['Y'] = '24-Hour Availability'
     d['N'] = 'Part-time Availability'
-    return d[value] if d[value] != "bad value" else value + " - BAD VALUE"
+    return d[value] if d[value] != "bad value" else value + "BAD VALUE"
 
 
 # 5.182 Guard/Transmit (G/T)
@@ -1477,7 +1562,7 @@ def field_198(value, record):
     d = defaultdict(def_val)
     d['A'] = 'Amplitude Modulated'
     d['F'] = 'Frequency Modulated'
-    return d[value] if d[value] != "bad value" else value + " - BAD VALUE"
+    return d[value] if d[value] != "bad value" else value + "BAD VALUE"
 
 
 # 5.199 Signal Emission (SIG EM)
@@ -1492,7 +1577,7 @@ def field_199(value, record):
     d['J'] = 'Single sideband, suppressed carrier (A3J)'
     d['L'] = 'Lower (single) sideband, carrier unknown'
     d['U'] = 'Upper (single) sideband, carrier unknown'
-    return d[value] if d[value] != "bad value" else value + " - BAD VALUE"
+    return d[value] if d[value] != "bad value" else value + "BAD VALUE"
 
 
 # 5.200 Remote Facility (REM FAC)
@@ -1845,12 +1930,24 @@ def field_269(value, record):
     if (value.isnumeric()):
         return float(value)/10
     else:
-        return "BAD VALUE"
+        raise ValueError(f'Bad Helicopter Procedure Course: {value}')
 
 
 # 5.270 TCH Value Indicator (TCHVI)
 def field_270(value, record):
-    return value
+    match value:
+        case 'I':
+            return 'ILS or MLS Glideslope'
+        case 'R':
+            return 'RNAV Procedure'
+        case 'V':
+            return 'Visual Glideslope Indicator (VGSI)'
+        case 'D':
+            return 'Default Value (40 or 50 feet)'
+        case ' ':   # this is apparently allowed to be empty, see ARINC SPECIFICATION 424 - Page 165
+            return value
+        case _:
+            raise ValueError(f'Bad TCH Value Indicator: {value}')
 
 
 # 5.271 Procedure Turn (PROC TURN)

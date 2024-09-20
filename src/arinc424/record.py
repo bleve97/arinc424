@@ -1,7 +1,7 @@
-import json
 import arinc424.decoder as decoder
 from collections import defaultdict
 from arinc424.decoder import Field
+from prettytable import PrettyTable
 
 
 class Record():
@@ -14,10 +14,13 @@ class Record():
     def validate(self, line):
         line = line.strip()
         if line.startswith(('S', 'T')) is False:
+            # print("Error Parsing: record doesn't start with record type")
             return False
         if len(line) != 132:
+            # print("Error Parsing: record not 132 characters in length")
             return False
         if line[-9:].isnumeric() is False:
+            # print("Error Parsing: record doesn't end in file record and cycle date")
             return False
         return True
 
@@ -74,7 +77,7 @@ class Record():
         if self.validate(line) is False:
             return False
 
-        self.raw = line
+        self.raw = line.strip()
         x1, x2 = line[4:6], line[4] + line[12]
         if x1 in records.keys():
             self.code = x1
@@ -89,33 +92,20 @@ class Record():
 
         return True
 
-    def dump(self):
-        s = ''
-        for f in self.fields:
-            q = "{:<32}: {}".format(f.name, f.value)
-            print(q)
-            s += q + '\n'
-        return s
-
-    def decode(self):
-        s = ''
-        for f in self.fields:
-            q = "{:<32}: {}".format(f.name, f.decode(self))
-            print(q)
-            s += q + '\n'
-        return s
-
-    def json(self, single_line=True):
-        d = {}
-        for i in self.fields:
-            d.update({i.name: i.value})
-        if single_line:
-            return json.dumps(d)
-        else:
-            return json.dumps(d,
-                              sort_keys=True,
-                              indent=4,
-                              separators=(',', ': '))
+    def decode(self, format=None):
+        table = PrettyTable(field_names=['Field', 'Value', 'Decoded'])
+        table.align = 'l'
+        for field in self.fields:
+            table.add_row([field.name, "'{}'".format(field.value), field.decode(self)])
+        match format:
+            case None:
+                print(table)
+                return table.get_string()
+            case 'json':
+                print(table.get_json_string())
+                return table.get_json_string()
+            case _:
+                print(f'Error: Invalid Output Format "{format}"')
 
 
 # 4.1.5 Holding Pattern Records (EP)
@@ -530,7 +520,7 @@ class AirportGate():
 
 # 4.1.12 Company Route Records (R)
 #
-# This file contains company tailored route information
+# This record contains company tailored route information
 #
 class CompanyRoute():
 
@@ -2957,6 +2947,7 @@ class PathPoint():
         ]
 
 
+# 4.1.10.1 Runway Primary Records
 class Runway():
 
     cont_idx = 21
@@ -2995,7 +2986,7 @@ class Runway():
             Field("Displaced Threshold Dist",               r[71:75],       decoder.field_069),
             Field("Threshold Crossing Height",              r[75:77],       decoder.field_067),
             Field("Runway Width",                           r[77:80],       decoder.field_109),
-            Field("TCH Value Indicator",                    r[80],          decoder.field_109),
+            Field("TCH Value Indicator",                    r[80],          decoder.field_270),
             Field("Localizer/MLS/GLS Ref Path Ident",       r[81:85],       decoder.field_044),
             Field("Localizer/MLS/GLS Category/Class",       r[85],          decoder.field_080),
             Field("Stopway",                                r[86:90],       decoder.field_079),
